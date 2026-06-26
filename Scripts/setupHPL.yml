@@ -1,0 +1,78 @@
+---
+- name: Setup a basic HPL run on headnode
+  hosts: headnode
+  tasks:
+    - name: Update
+      dnf:
+        name: "*"
+        state: latest
+      become: yes
+      
+    - name: Enable CRB repository
+        command: dnf config-manager --set-enabled crb
+        become: yes
+
+    - name: Install dependencies
+      dnf:
+        name:
+          - openmpi
+          - atlas
+          - openmpi-devel
+          - atlas-devel
+          - wget
+          - nano
+        state: present
+      become: yes
+
+    - name: Install HPL
+      shell: wget http://www.netlib.org/benchmark/hpl/hpl-2.3.tar.gz && tar -xzf hpl-2.3.tar.gz && mv hpl-2.3 hpl 
+      args:
+        creates: /home/kei/hpl
+
+    - name: Remove ZIP
+      file: 
+        path: /home/kei/hpl-2.3.tar.gz 
+        state: absent
+      become: yes
+
+    - name: Copy Makefile template
+      shell: cp setup/Make.Linux_PII_CBLAS_gm Make.Jargon
+      args:
+        chdir: /home/kei/hpl
+        creates: /home/kei/hpl/Make.Jargon
+
+    - name: Edit Make.Jargon for HPL
+      replace:
+        path: /home/kei/hpl/Make.Jargon
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { regexp: '^ARCH\s*=.*', replace: 'ARCH = Jargon' }
+        - { regexp: '^MPdir\s*=.*', replace: 'MPdir = /usr/lib64/openmpi' }
+        - { regexp: '^LAdir\s*=.*', replace: 'LAdir = /usr/lib64/atlas' }
+        - { regexp: '^LAlib\s*=.*', replace: 'LAlib = $(LAdir)/libtatlas.so $(LAdir)/libsatlas.so' }
+        - { regexp: '^CC\s*=.*', replace: 'CC = mpicc' }
+        - { regexp: '^LINKER\s*=.*', replace: 'LINKER = mpicc' }
+        - { regexp: '^TOPdir\s*=.*', replace: 'TOPdir = /home/kei/hpl' }
+
+    - name: Run make
+      shell: make arch=Jargon
+      args:
+        chdir: /home/kei/hpl
+        creates: /home/kei/hpl/bin/Jargon
+      environment:
+        PATH: "/usr/lib64/openmpi/bin:{{ ansible_env.PATH }}"
+
+    - name: Edit HPL.dat
+      replace:
+        path: /home/kei/hpl/bin/Jargon/HPL.dat
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { regexp: '^\d\s*# of process grids \(P x Q\)', replace: '1      # of process grids (P x Q)' }
+        - { regexp: '^\d\s\d\s\d\s*Ps', replace: '1      Ps' }
+        - { regexp: '^\d\s\d\s\d\s*Qs', replace: '1      Qs' }
+
+
+
+

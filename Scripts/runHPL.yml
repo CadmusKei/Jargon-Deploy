@@ -1,0 +1,20 @@
+---
+- name: Run HPL with ATLAS
+  hosts: headnode
+  vars_prompt:
+    - name: outputFolder
+      prompt: "Which folder should this go?"
+      private: no
+    - name: outputNumber
+      prompt: "Which output number to save to (eg: 5)"
+      private: no
+  tasks:
+    - name: Create output folder
+      file:
+        path: /home/kei/outputs/{{ outputFolder }}
+        state: directory
+
+    - name: Run HPL
+      shell: ./xhpl > /home/kei/outputs/{{ outputFolder }}/Output{{ outputNumber }}.txt
+      args:
+        chdir: /home/kei/hpl/bin/Jargon
