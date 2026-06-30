@@ -1,6 +1,6 @@
 ---
 - name: Run HPL with ATLAS
-  hosts: headnode
+  hosts: head_node
   vars_prompt:
     - name: outputFolder
       prompt: "Which folder should this go?"

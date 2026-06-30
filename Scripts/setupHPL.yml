@@ -1,6 +1,6 @@
 ---
 - name: Setup a basic HPL run on headnode
-  hosts: headnode
+  hosts: head_node
   tasks:
     - name: Update
       dnf:
