@@ -134,16 +134,25 @@ dnf install -y \
 pip3 install --upgrade pip
 
 ########################################
-# 10. Enable Services
+# 10. Disable firewalld (must happen before nftables starts)
 ########################################
-echo "[10/10] Enabling services..."
+echo "[10/11] Disabling firewalld..."
+systemctl stop firewalld
+systemctl disable firewalld
+systemctl mask firewalld
+
+########################################
+# 11. Enable Services
+########################################
+echo "[11/11] Enabling services..."
 systemctl enable --now sshd
 systemctl enable --now chronyd
 systemctl enable --now NetworkManager
 systemctl enable --now nftables
 
+
 ########################################
-# 11. Validation Phase
+# 12. Validation Phase
 ########################################
 echo "Checking installed tools..."
 gcc --version
@@ -151,6 +160,8 @@ cmake --version
 mpirun --version
 python3 --version
 ansible --version
+echo "Confirming firewalld is disabled..."
+systemctl is-active firewalld && echo "WARNING: firewalld is still active!" || echo "firewalld is not active (expected)"
 
 echo "Validation complete."
 echo
