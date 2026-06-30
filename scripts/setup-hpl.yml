@@ -18,15 +18,19 @@
           - nano
         state: present
       become: yes
+      
     - name: Install HPL
       shell: wget http://www.netlib.org/benchmark/hpl/hpl-2.3.tar.gz && tar -xzf hpl-2.3.tar.gz && mv hpl-2.3 hpl 
       args:
+      	chdir: /home/jargon
         creates: /home/jargon/hpl
+        
     - name: Remove ZIP
       file: 
         path: /home/jargon/hpl-2.3.tar.gz 
         state: absent
       become: yes
+      
     - name: Copy Makefile template
       shell: cp setup/Make.Linux_PII_CBLAS_gm Make.Jargon
       args:
