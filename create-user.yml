@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Script to create a user with custom
+# username, group, UID, and GID. Run as root or via sudo.
+#
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root (try: sudo $0)" >&2
+    exit 1
+fi
+
+read -rp "Enter username: " USERNAME
+if [[ -z "$USERNAME" ]]; then
+    echo "Username cannot be empty." >&2
+    exit 1
+fi
+
+if id "$USERNAME" &>/dev/null; then
+    echo "User '$USERNAME' already exists." >&2
+    exit 1
+fi
+
+read -rp "Enter primary group name [default: same as username]: " GROUPNAME
+GROUPNAME="${GROUPNAME:-$USERNAME}"
+
+read -rp "Enter desired UID [leave blank for next available]: " USERID
+read -rp "Enter desired GID [leave blank for next available]: " GROUPID
+
+# --- Create the group first ---
+if getent group "$GROUPNAME" &>/dev/null; then
+    echo "Group '$GROUPNAME' already exists, reusing it."
+else
+    if [[ -n "$GROUPID" ]]; then
+        if getent group "$GROUPID" &>/dev/null; then
+            echo "GID $GROUPID is already in use." >&2
+            exit 1
+        fi
+        groupadd -g "$GROUPID" "$GROUPNAME"
+    else
+        groupadd "$GROUPNAME"
+    fi
+    echo "Created group '$GROUPNAME'."
+fi
+
+# --- Create the user ---
+USERADD_ARGS=(-m -g "$GROUPNAME" -s /bin/bash)
+
+if [[ -n "$USERID" ]]; then
+    if getent passwd "$USERID" &>/dev/null; then
+        echo "UID $USERID is already in use." >&2
+        exit 1
+    fi
+    USERADD_ARGS+=(-u "$USERID")
+fi
+
+useradd "${USERADD_ARGS[@]}" "$USERNAME"
+echo "Created user '$USERNAME' (UID: $(id -u "$USERNAME"), GID: $(id -g "$USERNAME"))."
+
+# --- Set a password ---
+read -rp "Set a password for $USERNAME now? [y/N]: " SET_PASS
+if [[ "$SET_PASS" =~ ^[Yy]$ ]]; then
+    passwd "$USERNAME"
+fi
+
+# --- Optional: add to sudo/wheel ---
+read -rp "Grant passwordless sudo to $USERNAME? [y/N]: " GIVE_SUDO
+if [[ "$GIVE_SUDO" =~ ^[Yy]$ ]]; then
+    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$USERNAME"
+    chmod 0440 "/etc/sudoers.d/$USERNAME"
+    echo "Granted passwordless sudo to '$USERNAME'."
+fi
+
+echo
+echo "Complete! Summary:"
+echo "  User:  $USERNAME (UID $(id -u "$USERNAME"))"
+echo "  Group: $GROUPNAME (GID $(id -g "$USERNAME"))"
+echo "  Home:  $(eval echo "~$USERNAME")"

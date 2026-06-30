@@ -11,10 +11,10 @@
   tasks:
     - name: Create output folder
       file:
-        path: /home/kei/outputs/{{ outputFolder }}
+        path: /home/jargon/outputs/{{ outputFolder }}
         state: directory
 
     - name: Run HPL
-      shell: ./xhpl > /home/kei/outputs/{{ outputFolder }}/Output{{ outputNumber }}.txt
+      shell: ./xhpl > /home/jargon/outputs/{{ outputFolder }}/Output{{ outputNumber }}.txt
       args:
-        chdir: /home/kei/hpl/bin/Jargon
+        chdir: /home/jargon/hpl/bin/Jargon
