@@ -1,12 +1,12 @@
 .DEFAULT_GOAL := help
 
-.PHONY: hpl run create-user add-hostname chrony-head chrony-compute help
+.PHONY: hpl run user add-hostname chrony-head chrony-compute help
 
 hpl:
 	ansible-playbook -i inventory.ini setup-hpl.yml --ask-become-pass
 run:
 	ansible-playbook -i inventory.ini run-hpl.yml --ask-become-pass
-create-user:
+user:
 	ansible-playbook -i inventory.ini create-user.yml --ask-become-pass
 add-hostname:
 	ansible-playbook -i inventory.ini add-hostname.yml --ask-become-pass
