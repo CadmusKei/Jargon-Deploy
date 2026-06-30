@@ -1,8 +1,7 @@
 ---
 # create-user.yml
-# Creates a user and matching group across the cluster, with optional sudo.
-#
-#   ansible-playbook -i inventory.ini create-user.yml --ask-become-pass
+# Creates a user and matching group across the cluster, with optional
+# password and optional sudo.
 #
 - name: Create a user and group across the cluster
   hosts: all
@@ -11,6 +10,13 @@
     - name: new_username
       prompt: "Enter the username to create"
       private: no
+
+    - name: new_password
+      prompt: "Enter a password for the user (leave blank to skip)"
+      private: yes
+      encrypt: "sha512_crypt"
+      confirm: yes
+      default: ""
 
     - name: grant_sudo_input
       prompt: "Grant passwordless sudo? (y/n)"
@@ -37,6 +43,12 @@
         shell: /bin/bash
         create_home: yes
         state: present
+
+    - name: Set password for user
+      user:
+        name: "{{ new_username }}"
+        password: "{{ new_password }}"
+      when: new_password | length > 0
 
     - name: Grant passwordless sudo
       copy:
