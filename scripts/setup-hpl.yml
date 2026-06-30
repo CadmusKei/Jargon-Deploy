@@ -22,7 +22,7 @@
     - name: Install HPL
       shell: wget http://www.netlib.org/benchmark/hpl/hpl-2.3.tar.gz && tar -xzf hpl-2.3.tar.gz && mv hpl-2.3 hpl 
       args:
-      	chdir: /home/jargon
+        chdir: /home/jargon
         creates: /home/jargon/hpl
         
     - name: Remove ZIP
