@@ -1,0 +1,38 @@
+---
+- name: Configure cluster hostnames
+  hosts: all
+  become: yes
+
+  vars_prompt:
+    - name: new_hostname
+      prompt: "Enter hostname for this machine"
+      private: no
+
+    - name: head_ip
+      prompt: "Enter head node IP address"
+      private: no
+
+    - name: compute1_ip
+      prompt: "Enter compute node 1 IP address"
+      private: no
+
+    - name: compute2_ip
+      prompt: "Enter compute node 2 IP address"
+      private: no
+
+
+  tasks:
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ new_hostname }}"
+
+
+    - name: Configure /etc/hosts
+      ansible.builtin.blockinfile:
+        path: /etc/hosts
+        block: |
+          {{ head_ip }} headnode
+          {{ compute1_ip }} compute1
+          {{ compute2_ip }} compute2
+        marker: "# {mark} ANSIBLE MANAGED CLUSTER HOSTS"

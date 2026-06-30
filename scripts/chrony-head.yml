@@ -1,0 +1,60 @@
+---
+
+- name: Configure chrony NTP server on head node
+  hosts: head_node
+  become: yes
+
+  vars:
+    cluster_subnet: "10.0.0.0/24"
+
+  tasks:
+    - name: Install chrony
+      dnf:
+        name: chrony
+        state: present
+
+    - name: Uncomment any existing allow line
+      replace:
+        path: /etc/chrony.conf
+        regexp: '^#\s*allow\s'
+        replace: 'allow '
+      notify: restart chronyd
+
+    - name: Allow cluster subnet to sync time from this node
+      lineinfile:
+        path: /etc/chrony.conf
+        regexp: '^allow '
+        line: "allow {{ cluster_subnet }}"
+        insertafter: EOF
+      notify: restart chronyd
+
+    - name: Enable and start chronyd
+      systemd:
+        name: chronyd
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: restart chronyd
+      systemd:
+        name: chronyd
+        state: restarted
+
+  post_tasks:
+    - name: Show tracking status
+      command: chronyc tracking
+      register: tracking_output
+      changed_when: false
+
+    - name: Display tracking status
+      debug:
+        var: tracking_output.stdout_lines
+
+    - name: Show connected clients (should be empty on first run)
+      command: chronyc clients
+      register: clients_output
+      changed_when: false
+
+    - name: Display connected clients
+      debug:
+        var: clients_output.stdout_lines
