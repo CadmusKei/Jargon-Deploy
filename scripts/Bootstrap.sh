@@ -131,7 +131,7 @@ dnf install -y \
     python3-pip \
     ansible
 
-pip3 install --upgrade pip
+pip3 install pip
 
 ########################################
 # 10. Disable firewalld (must happen before nftables starts)
@@ -157,7 +157,7 @@ systemctl enable --now nftables
 echo "Checking installed tools..."
 gcc --version
 cmake --version
-mpirun --version
+rpm -q openmpi
 python3 --version
 ansible --version
 echo "Confirming firewalld is disabled..."
